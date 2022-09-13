@@ -143,6 +143,7 @@ public final class EventTraceDataSourceRestfulApi {
         // CHECKSTYLE:OFF
         } catch (final Exception ex) {
         // CHECKSTYLE:ON
+            ex.printStackTrace();
             return false;
         }
         return true;
