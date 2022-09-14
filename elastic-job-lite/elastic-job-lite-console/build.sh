@@ -7,3 +7,4 @@ docker build -t elastic-job-lite-console:2.1.5 .
 #push
 docker tag elastic-job-lite-console:2.1.5 micr.cloud.mioffice.cn/elastic-job/elastic-job-lite-console:2.1.5
 docker push micr.cloud.mioffice.cn/elastic-job/elastic-job-lite-console:2.1.5
+
