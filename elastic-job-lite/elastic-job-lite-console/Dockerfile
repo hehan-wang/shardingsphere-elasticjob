@@ -1,4 +1,4 @@
-FROM openjdk:8-jre-slim
+FROM openjdk:8-jdk-alpine
 
 COPY target/elastic-job-lite-console-2.1.5.tar.gz .
 
@@ -10,4 +10,4 @@ COPY mysql-connector-java-8.0.30.jar lib/
 
 EXPOSE 8899
 
-ENTRYPOINT ["./bin/start.sh"]
+ENTRYPOINT ["/bin/bash","./bin/start.sh"]
