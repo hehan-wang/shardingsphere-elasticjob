@@ -212,7 +212,7 @@ function validate() {
             namespace: {
                 validators: {
                     stringLength: {
-                        max: 50,
+                        max: 100,
                         message: $.i18n.prop("registry-center-namespace-length-limit")
                     }
                 }
