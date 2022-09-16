@@ -10,4 +10,4 @@ COPY mysql-connector-java-8.0.30.jar lib/
 
 EXPOSE 8899
 
-ENTRYPOINT ["/bin/bash","./bin/stardockert.sh"]
+ENTRYPOINT ["/bin/bash","./bin/start.sh"]
