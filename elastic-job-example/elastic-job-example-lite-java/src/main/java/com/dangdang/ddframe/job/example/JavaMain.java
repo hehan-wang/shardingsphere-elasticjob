@@ -44,7 +44,8 @@ public final class JavaMain {
     private static final int EMBED_ZOOKEEPER_PORT = 4181;
 
 //    private static final String ZOOKEEPER_CONNECTION_STRING = "localhost:" + EMBED_ZOOKEEPER_PORT;
-    private static final String ZOOKEEPER_CONNECTION_STRING = "tjwqstaging.zk.hadoop.srv:2181";
+//    private static final String ZOOKEEPER_CONNECTION_STRING = "tjwqstaging.zk.hadoop.srv:2181";
+    private static final String ZOOKEEPER_CONNECTION_STRING = "localhost:2181";
 
 //    private static final String JOB_NAMESPACE = "elastic-job-example-lite-java";
     public static final String JOB_NAMESPACE = "services/com.xiaomi.miui.ad.emi.BudgetSmooth/elastic-job-example-lite-java";
@@ -69,8 +70,8 @@ public final class JavaMain {
         CoordinatorRegistryCenter regCenter = setUpRegistryCenter();
         JobEventConfiguration jobEventConfig = new JobEventRdbConfiguration(setUpEventTraceDataSource());
         setUpSimpleJob(regCenter, jobEventConfig);
-//        setUpDataflowJob(regCenter, jobEventConfig);
-//        setUpScriptJob(regCenter, jobEventConfig);
+        setUpDataflowJob(regCenter, jobEventConfig);
+        setUpScriptJob(regCenter, jobEventConfig);
     }
     
     private static CoordinatorRegistryCenter setUpRegistryCenter() {
