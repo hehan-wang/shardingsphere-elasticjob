@@ -1,3 +1,6 @@
+# remove
+docker rmi elastic-job-lite-console:2.1.5
+docker rmi micr.cloud.mioffice.cn/elastic-job/elastic-job-lite-console:2.1.5
 # build
 docker build -t elastic-job-lite-console:2.1.5 .
 
