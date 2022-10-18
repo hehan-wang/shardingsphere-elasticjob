@@ -70,7 +70,9 @@ public final class FailoverService {
      * 如果需要失效转移, 则执行作业失效转移.
      */
     public void failoverIfNecessary() {
+        // 节点/leader/failover/items下面存在节点且job正在运行中,说明有作业项需要失效转移
         if (needFailover()) {
+            //在主节点进行失败任务执行
             jobNodeStorage.executeInLeader(FailoverNode.LATCH, new FailoverLeaderExecutionCallback());
         }
     }

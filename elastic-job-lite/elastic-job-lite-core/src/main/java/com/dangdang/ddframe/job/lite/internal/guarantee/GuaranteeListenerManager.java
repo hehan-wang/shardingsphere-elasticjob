@@ -45,7 +45,9 @@ public final class GuaranteeListenerManager extends AbstractListenerManager {
     
     @Override
     public void start() {
+        //jobName/guarantee/started 删除使用notifyAll让工作线程开始工作
         addDataListener(new StartedNodeRemovedJobListener());
+        //jobName/guarantee/completed 删除使用notifyAll让工作线程结束工作
         addDataListener(new CompletedNodeRemovedJobListener());
     }
     

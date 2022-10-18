@@ -93,6 +93,8 @@ public abstract class AbstractElasticJobExecutor {
     
     /**
      * 执行作业.
+     * 执行作业关键步骤（重点关注）
+     * <a href="https://mp.weixin.qq.com/s/kzUL7GKrQP6m5muIDNYopQ">...</a>
      */
     public final void execute() {
         try {

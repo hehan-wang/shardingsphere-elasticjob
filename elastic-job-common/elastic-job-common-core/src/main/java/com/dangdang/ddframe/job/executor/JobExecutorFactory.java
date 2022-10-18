@@ -44,6 +44,7 @@ public final class JobExecutorFactory {
      */
     @SuppressWarnings("unchecked")
     public static AbstractElasticJobExecutor getJobExecutor(final ElasticJob elasticJob, final JobFacade jobFacade) {
+        //根据class的类型返回不同的执行器
         if (null == elasticJob) {
             return new ScriptJobExecutor(jobFacade);
         }

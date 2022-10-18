@@ -68,6 +68,7 @@ public final class ConfigurationService {
      */
     public void persist(final LiteJobConfiguration liteJobConfig) {
         checkConflictJob(liteJobConfig);
+        //root节点不存在或者overwrite=true情况下，才会更新配置
         if (!jobNodeStorage.isJobNodeExisted(ConfigurationNode.ROOT) || liteJobConfig.isOverwrite()) {
             jobNodeStorage.replaceJobNode(ConfigurationNode.ROOT, LiteJobConfigurationGsonFactory.toJson(liteJobConfig));
         }

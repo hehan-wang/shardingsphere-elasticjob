@@ -40,7 +40,10 @@ public final class JobInstance {
      * 作业实例主键.
      */
     private final String jobInstanceId;
-    
+
+    /**
+     *  jobInstanceId生成：10.235.146.129@-@53658
+     */
     public JobInstance() {
         jobInstanceId = IpUtils.getIp() + DELIMITER + ManagementFactory.getRuntimeMXBean().getName().split("@")[0];
     }

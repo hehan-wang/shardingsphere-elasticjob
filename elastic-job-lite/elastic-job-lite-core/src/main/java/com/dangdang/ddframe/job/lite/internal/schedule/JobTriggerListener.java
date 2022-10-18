@@ -25,21 +25,25 @@ import org.quartz.listeners.TriggerListenerSupport;
 
 /**
  * 作业触发监听器.
- * 
+ *
  * @author zhangliang
  */
 @RequiredArgsConstructor
 public final class JobTriggerListener extends TriggerListenerSupport {
-    
+
     private final ExecutionService executionService;
-    
+
     private final ShardingService shardingService;
-    
+
     @Override
     public String getName() {
         return "JobTriggerListener";
     }
-    
+
+    /**
+     * 触发错过时触发作业执行.
+     * 在ZK中写入misfire标记  /sharding/{item}/misfire
+     */
     @Override
     public void triggerMisfired(final Trigger trigger) {
         if (null != trigger.getPreviousFireTime()) {

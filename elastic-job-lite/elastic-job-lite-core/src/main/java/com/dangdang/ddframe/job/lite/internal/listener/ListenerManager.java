@@ -73,16 +73,27 @@ public final class ListenerManager {
     
     /**
      * 开启所有监听器.
+     * 注册watch到ZK，感知ZK节点变化，实时的做出相应的动作
+     * 详解链接：<a href="https://mp.weixin.qq.com/s?__biz=MzIxMTAzMjM1Ng==&mid=2647852168&idx=1&sn=cd74fd32fae0dd98e31424c3a37da351&chksm=8f7c24c3b80badd5b36ec28dfe8e46766b4e52cf87b47b878488b1372a9be356f9c9e51cd3b0&scene=178&cur_album_id=1769118505536192512#rd">...</a>
      */
     public void startAllListeners() {
+        //选主监听器
         electionListenerManager.start();
+        //分片监听器
         shardingListenerManager.start();
+        //失效转移监听器
         failoverListenerManager.start();
+        //作业执行监控监听器
         monitorExecutionListenerManager.start();
+        //作业关闭监听器
         shutdownListenerManager.start();
+        //作业触发监听器
         triggerListenerManager.start();
+        //作业重调度监听器
         rescheduleListenerManager.start();
+        //作业分片保证监听器
         guaranteeListenerManager.start();
+        //注册中心连接状态监听器
         jobNodeStorage.addConnectionStateListener(regCenterConnectionStateListener);
     }
 }

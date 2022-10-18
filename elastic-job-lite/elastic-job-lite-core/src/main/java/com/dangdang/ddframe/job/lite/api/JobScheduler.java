@@ -50,45 +50,49 @@ import java.util.Properties;
 
 /**
  * 作业调度器.
- * 
+ *
  * @author zhangliang
  * @author caohao
  */
 public class JobScheduler {
-    
+
     public static final String ELASTIC_JOB_DATA_MAP_KEY = "elasticJob";
-    
+
     private static final String JOB_FACADE_DATA_MAP_KEY = "jobFacade";
-    
+
     private final LiteJobConfiguration liteJobConfig;
-    
+
     private final CoordinatorRegistryCenter regCenter;
-    
+
     // TODO 为测试使用,测试用例不能反复new monitor service,以后需要把MonitorService重构为单例
     @Getter
     private final SchedulerFacade schedulerFacade;
-    
+
     private final JobFacade jobFacade;
-    
+
     public JobScheduler(final CoordinatorRegistryCenter regCenter, final LiteJobConfiguration liteJobConfig, final ElasticJobListener... elasticJobListeners) {
         this(regCenter, liteJobConfig, new JobEventBus(), elasticJobListeners);
     }
-    
-    public JobScheduler(final CoordinatorRegistryCenter regCenter, final LiteJobConfiguration liteJobConfig, final JobEventConfiguration jobEventConfig, 
+
+    public JobScheduler(final CoordinatorRegistryCenter regCenter, final LiteJobConfiguration liteJobConfig, final JobEventConfiguration jobEventConfig,
                         final ElasticJobListener... elasticJobListeners) {
         this(regCenter, liteJobConfig, new JobEventBus(jobEventConfig), elasticJobListeners);
     }
-    
+
     private JobScheduler(final CoordinatorRegistryCenter regCenter, final LiteJobConfiguration liteJobConfig, final JobEventBus jobEventBus, final ElasticJobListener... elasticJobListeners) {
+        //注册到jobInstanceMap中
         JobRegistry.getInstance().addJobInstance(liteJobConfig.getJobName(), new JobInstance());
         this.liteJobConfig = liteJobConfig;
         this.regCenter = regCenter;
         List<ElasticJobListener> elasticJobListenerList = Arrays.asList(elasticJobListeners);
+        //初始化监听器（分布式+单点）
         setGuaranteeServiceForElasticJobListeners(regCenter, elasticJobListenerList);
+        //初始化调度门面
         schedulerFacade = new SchedulerFacade(regCenter, liteJobConfig.getJobName(), elasticJobListenerList);
+        //初始化作业门面
         jobFacade = new LiteJobFacade(regCenter, liteJobConfig.getJobName(), Arrays.asList(elasticJobListeners), jobEventBus);
     }
-    
+
     private void setGuaranteeServiceForElasticJobListeners(final CoordinatorRegistryCenter regCenter, final List<ElasticJobListener> elasticJobListeners) {
         GuaranteeService guaranteeService = new GuaranteeService(regCenter, liteJobConfig.getJobName());
         for (ElasticJobListener each : elasticJobListeners) {
@@ -97,24 +101,34 @@ public class JobScheduler {
             }
         }
     }
-    
+
     /**
-     * 初始化作业.
+     * 初始化作业核心逻辑.
      */
     public void init() {
+        //初始化作业配置到ZK
         LiteJobConfiguration liteJobConfigFromRegCenter = schedulerFacade.updateJobConfiguration(liteJobConfig);
+        //注册每个任务总分片数
         JobRegistry.getInstance().setCurrentShardingTotalCount(liteJobConfigFromRegCenter.getJobName(), liteJobConfigFromRegCenter.getTypeConfig().getCoreConfig().getShardingTotalCount());
+        //初始化作业调度器
         JobScheduleController jobScheduleController = new JobScheduleController(
                 createScheduler(), createJobDetail(liteJobConfigFromRegCenter.getTypeConfig().getJobClass()), liteJobConfigFromRegCenter.getJobName());
+        //注册到jobScheduleController到内存map中，加载ZK jobName缓存
         JobRegistry.getInstance().registerJob(liteJobConfigFromRegCenter.getJobName(), jobScheduleController, regCenter);
+        //注册作业启动信息到ZK
         schedulerFacade.registerStartUpInfo(!liteJobConfigFromRegCenter.isDisabled());
+        //开启quartz任务调度
         jobScheduleController.scheduleJob(liteJobConfigFromRegCenter.getTypeConfig().getCoreConfig().getCron());
     }
-    
+
+    /**
+     * 创建quartz任务
+     */
     private JobDetail createJobDetail(final String jobClass) {
         JobDetail result = JobBuilder.newJob(LiteJob.class).withIdentity(liteJobConfig.getJobName()).build();
         result.getJobDataMap().put(JOB_FACADE_DATA_MAP_KEY, jobFacade);
         Optional<ElasticJob> elasticJobInstance = createElasticJobInstance();
+        //设置任务执行器实例到JobDataMap中，如果createElasticJobInstance返回空则通过反射创建Job
         if (elasticJobInstance.isPresent()) {
             result.getJobDataMap().put(ELASTIC_JOB_DATA_MAP_KEY, elasticJobInstance.get());
         } else if (!jobClass.equals(ScriptJob.class.getCanonicalName())) {
@@ -126,11 +140,15 @@ public class JobScheduler {
         }
         return result;
     }
-    
+
     protected Optional<ElasticJob> createElasticJobInstance() {
         return Optional.absent();
     }
-    
+
+    /**
+     * 创建quartz调度器.
+     * 注册了misfire的listener
+     */
     private Scheduler createScheduler() {
         Scheduler result;
         try {
@@ -143,7 +161,7 @@ public class JobScheduler {
         }
         return result;
     }
-    
+
     private Properties getBaseQuartzProperties() {
         Properties result = new Properties();
         result.put("org.quartz.threadPool.class", org.quartz.simpl.SimpleThreadPool.class.getName());

@@ -70,11 +70,13 @@ public final class FailoverListenerManager extends AbstractListenerManager {
         LiteJobConfiguration jobConfig = configService.load(true);
         return null != jobConfig && jobConfig.isFailover();
     }
-    
+
+    //失效转移监听器，负责处理任务的失效转移（重点关注）
     class JobCrashedJobListener extends AbstractJobListener {
         
         @Override
         protected void dataChanged(final String path, final Type eventType, final String data) {
+            //开启失效转移，且instances节点下的子节点发生删除
             if (isFailoverEnabled() && Type.NODE_REMOVED == eventType && instanceNode.isInstancePath(path)) {
                 String jobInstanceId = path.substring(instanceNode.getInstanceFullPath().length() + 1);
                 if (jobInstanceId.equals(JobRegistry.getInstance().getJobInstance(jobName).getJobInstanceId())) {
