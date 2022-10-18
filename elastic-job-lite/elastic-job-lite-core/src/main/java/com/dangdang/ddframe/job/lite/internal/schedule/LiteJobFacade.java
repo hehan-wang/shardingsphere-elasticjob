@@ -102,9 +102,11 @@ public final class LiteJobFacade implements JobFacade {
             failoverService.updateFailoverComplete(shardingContexts.getShardingItemParameters().keySet());
         }
     }
-    
+
+    //获取分片上下文
     @Override
     public ShardingContexts getShardingContexts() {
+        //1. 如果配置failover=true，且有分给当前实例的故障转移的分片，那么生成故障转移的分片上下文
         boolean isFailover = configService.load(true).isFailover();
         if (isFailover) {
             List<Integer> failoverShardingItems = failoverService.getLocalFailoverItems();
@@ -112,12 +114,14 @@ public final class LiteJobFacade implements JobFacade {
                 return executionContextService.getJobShardingContext(failoverShardingItems);
             }
         }
+        //2. 执行分片（重点关注）
         shardingService.shardingIfNecessary();
         List<Integer> shardingItems = shardingService.getLocalShardingItems();
         if (isFailover) {
             shardingItems.removeAll(failoverService.getLocalTakeOffItems());
         }
         shardingItems.removeAll(executionService.getDisabledItems(shardingItems));
+        //3. 生成分片上下文
         return executionContextService.getJobShardingContext(shardingItems);
     }
     

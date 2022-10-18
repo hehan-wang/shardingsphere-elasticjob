@@ -100,21 +100,29 @@ public final class ShardingService {
      * </p>
      */
     public void shardingIfNecessary() {
+        //1. 获取当前所有在线的实例
         List<JobInstance> availableJobInstances = instanceService.getAvailableJobInstances();
+        //2. 没有/leader/sharding/necessary 或者当前没有可用的实例, 则不分片
         if (!isNeedSharding() || availableJobInstances.isEmpty()) {
             return;
         }
+        //3. 所有节点的等待选主，主节点才能分片，非主节点返回。
         if (!leaderService.isLeaderUntilBlock()) {
             blockUntilShardingCompleted();
             return;
         }
+        //4. 等running的item完成
         waitingOtherJobCompleted();
         LiteJobConfiguration liteJobConfig = configService.load(false);
         int shardingTotalCount = liteJobConfig.getTypeConfig().getCoreConfig().getShardingTotalCount();
         log.debug("Job '{}' sharding begin.", jobName);
+        //5. /leader/sharding/process 临时节点，用于标记当前job正在分片
         jobNodeStorage.fillEphemeralJobNode(ShardingNode.PROCESSING, "");
+        //6. 删除ZK中的分片信息
         resetShardingInfo(shardingTotalCount);
+        //7.通过策略工厂获取分片算法
         JobShardingStrategy jobShardingStrategy = JobShardingStrategyFactory.getStrategy(liteJobConfig.getJobShardingStrategyClass());
+        //8. 在ZK事务中执行分片写入
         jobNodeStorage.executeInTransaction(new PersistShardingInfoTransactionExecutionCallback(jobShardingStrategy.sharding(availableJobInstances, jobName, shardingTotalCount)));
         log.debug("Job '{}' sharding complete.", jobName);
     }
@@ -202,6 +210,7 @@ public final class ShardingService {
         
         @Override
         public void execute(final CuratorTransactionFinal curatorTransactionFinal) throws Exception {
+            //分片写入成功后，删除/leader/sharding/processing，/leader/sharding/necessary  临时节点
             for (Map.Entry<JobInstance, List<Integer>> entry : shardingResults.entrySet()) {
                 for (int shardingItem : entry.getValue()) {
                     curatorTransactionFinal.create().forPath(jobNodePath.getFullPath(ShardingNode.getInstanceNode(shardingItem)), entry.getKey().getJobInstanceId().getBytes()).and();
