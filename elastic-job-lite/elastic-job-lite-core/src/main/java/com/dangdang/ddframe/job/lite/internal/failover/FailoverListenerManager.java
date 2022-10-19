@@ -76,21 +76,28 @@ public final class FailoverListenerManager extends AbstractListenerManager {
         
         @Override
         protected void dataChanged(final String path, final Type eventType, final String data) {
-            //开启失效转移，且instances节点下的子节点发生删除
+            //1. 开启失效转移，且instances节点下的子节点发生删除
             if (isFailoverEnabled() && Type.NODE_REMOVED == eventType && instanceNode.isInstancePath(path)) {
                 String jobInstanceId = path.substring(instanceNode.getInstanceFullPath().length() + 1);
                 if (jobInstanceId.equals(JobRegistry.getInstance().getJobInstance(jobName).getJobInstanceId())) {
                     return;
                 }
+                //2. 执行失效转移
+                //2.1 当前实例存在失效分片项
                 List<Integer> failoverItems = failoverService.getFailoverItems(jobInstanceId);
                 if (!failoverItems.isEmpty()) {
                     for (int each : failoverItems) {
+                        //2.2 设置分片项的失败标记
                         failoverService.setCrashedFailoverFlag(each);
+                        //2.3 在主节点进行失败任务执行
                         failoverService.failoverIfNecessary();
                     }
                 } else {
+                    //2.1 获取当前实例的所有分片项
                     for (int each : shardingService.getShardingItems(jobInstanceId)) {
+                        //2.2 设置分片项的失败标记
                         failoverService.setCrashedFailoverFlag(each);
+                        //2.3 在主节点进行失败任务执行
                         failoverService.failoverIfNecessary();
                     }
                 }
