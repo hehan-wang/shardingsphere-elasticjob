@@ -135,9 +135,10 @@ public abstract class AbstractElasticJobExecutor {
             jobFacade.clearMisfire(shardingContexts.getShardingItemParameters().keySet());
             execute(shardingContexts, JobExecutionEvent.ExecutionSource.MISFIRE);
         }
+        //8. 执行完自己的任务，检查下是否有失效任务需要执行
         jobFacade.failoverIfNecessary();
         try {
-            //8. 执行ElasticJobListeners后置处理
+            //9. 执行ElasticJobListeners后置处理
             jobFacade.afterJobExecuted(shardingContexts);
             //CHECKSTYLE:OFF
         } catch (final Throwable cause) {
