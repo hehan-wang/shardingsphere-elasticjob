@@ -52,6 +52,7 @@ public final class TriggerListenerManager extends AbstractListenerManager {
         
         @Override
         protected void dataChanged(final String path, final Type eventType, final String data) {
+            //data为TRIGGER&& ZK变更为当前任务当前实例 &&操作状态为更新，使用Quartz的triggerJob()触发任务
             if (!InstanceOperation.TRIGGER.name().equals(data) || !instanceNode.isLocalInstancePath(path) || Type.NODE_UPDATED != eventType) {
                 return;
             }
