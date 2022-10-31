@@ -58,9 +58,10 @@ public final class ShardingListenerManager extends AbstractListenerManager {
         addDataListener(new ShardingTotalCountChangedJobListener());
         addDataListener(new ListenServersChangedJobListener());
     }
-    
+
+    //分片总个数变化了，需要重新分片
     class ShardingTotalCountChangedJobListener extends AbstractJobListener {
-        
+        // 新分片总数！=旧分片总数的时候，需要重新分片。且把分片信息读到内存JobRegistry
         @Override
         protected void dataChanged(final String path, final Type eventType, final String data) {
             if (configNode.isConfigPath(path) && 0 != JobRegistry.getInstance().getCurrentShardingTotalCount(jobName)) {
@@ -72,11 +73,13 @@ public final class ShardingListenerManager extends AbstractListenerManager {
             }
         }
     }
-    
+
+    //服务器发生
     class ListenServersChangedJobListener extends AbstractJobListener {
         
         @Override
         protected void dataChanged(final String path, final Type eventType, final String data) {
+            //job为开启状态且服务器列表产生变化（/servers节点或者 /instances节点）
             if (!JobRegistry.getInstance().isShutdown(jobName) && (isInstanceChange(eventType, path) || isServerChange(path))) {
                 shardingService.setReshardingFlag();
             }
