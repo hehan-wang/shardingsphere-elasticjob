@@ -27,6 +27,7 @@ import com.dangdang.ddframe.job.example.job.dataflow.JavaDataflowJob;
 import com.dangdang.ddframe.job.example.job.simple.JavaSimpleJob;
 import com.dangdang.ddframe.job.lite.api.JobScheduler;
 import com.dangdang.ddframe.job.lite.config.LiteJobConfiguration;
+import com.dangdang.ddframe.job.lite.internal.election.LeaderService;
 import com.dangdang.ddframe.job.reg.base.CoordinatorRegistryCenter;
 import com.dangdang.ddframe.job.reg.zookeeper.ZookeeperConfiguration;
 import com.dangdang.ddframe.job.reg.zookeeper.ZookeeperRegistryCenter;
@@ -70,9 +71,9 @@ public final class MyJavaMain {
         result.setUsername(EVENT_RDB_STORAGE_USERNAME);
         result.setPassword(EVENT_RDB_STORAGE_PASSWORD);
         JobEventConfiguration jobEventConfig = new JobEventRdbConfiguration(result);
-
+        String jobName = "javaSimpleJob";
         //配置任务
-        JobCoreConfiguration coreConfig = JobCoreConfiguration.newBuilder("javaSimpleJob", "0/10 * * * * ?", 3)
+        JobCoreConfiguration coreConfig = JobCoreConfiguration.newBuilder(jobName, "0/10 * * * * ?", 3)
                 .failover(true)
                 .misfire(false)
                 .shardingItemParameters("0=Beijing,1=Shanghai,2=Guangzhou").build();
@@ -80,6 +81,8 @@ public final class MyJavaMain {
         LiteJobConfiguration liteJobConfiguration = LiteJobConfiguration.newBuilder(simpleJobConfig)
                 .overwrite(true).build();
         //初始化任务
-        new JobScheduler(regCenter, liteJobConfiguration, jobEventConfig).init();
+        JobScheduler scheduler = new JobScheduler(regCenter, liteJobConfiguration, jobEventConfig, new ElasticJobMetaListener());
+        scheduler.init();
+        JobUtils.reg(regCenter, jobName);
     }
 }
